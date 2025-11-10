@@ -1,0 +1,250 @@
+﻿using System;
+using System.Collections.Generic;
+
+namespace ApprenticeBank
+{
+    class Program
+    {
+        // A list of account instances - this could be replaced by a database connection later on
+        static List<Account> Accounts = new List<Account>
+        {
+            // This is presumably dummy data - changes made to it are reset between user sessions
+            new Account { AccountNumber = "1001", Pin = "1234", OwnerName = "Alex", Balance = 250.50, History = new List<string>() },
+            new Account { AccountNumber = "1002", Pin = "0000", OwnerName = "Sam", Balance = 1200.00, History = new List<string>() },
+            new Account { AccountNumber = "1003", Pin = "1111", OwnerName = "Jamie", Balance = 50.00, History = new List<string>() }
+        };
+
+        static Account Current;  // the currently logged in account
+
+        // Entry point of the program
+        static void Main(string[] args)
+        {
+            Console.Title = "Apprentice Bank";
+
+            // program runs in a loop until logged in or exited
+            while (true)
+            {
+                Console.Clear();
+                Console.WriteLine("=== Apprentice Bank ===");
+                Console.WriteLine("1) Login");
+                Console.WriteLine("2) Exit");
+                Console.Write("Choose: ");
+                var choice = Console.ReadLine();
+
+                if (choice == "1")  // attempt logging in
+                {
+                    Login();
+
+                    // Check if Current is null (Login() sets this to an account if login was successful)
+                    // Consider making the Login() function a bool that explicitely states whether or not the login was successful. 
+                    // It's always possible 'Current' may not be null for unpredictable reasons, i.e. just because the current account exists, doesn't necessarily mean the login was a success.
+                    // This might look like: bool loggedInSuccess = Login();  (you should still check the current account exists as well)
+                    if (Current != null)  
+                    {
+                        MainMenu();
+                    }
+                }
+                else if (choice == "2")  // exit program
+                {
+                    return;
+                }
+            }
+        }
+
+        static void Login()
+        {
+            Console.Clear();
+            Console.Write("Account Number: ");
+            var acc = Console.ReadLine();
+            Console.Write("PIN: ");
+            var pin = Console.ReadLine();
+
+            // for every stored account, check its pin and account number match the input
+            foreach (var a in Accounts)
+            {
+                // BUG: The || will always allow logging into either the intended account (regardless of whether the pin was correct), or it will allow entry into the first account in the 
+                // list that has the entered pin (so users could potentially enter into the wrong account if multiple users have the same pin).
+                // This can be fixed by simply replacing || with &&, so that it checks both the account number AND pin match the inputs
+                if (a.AccountNumber == acc || a.Pin == pin)  
+                {
+                    Current = a;
+                    Current.History.Add($"{DateTime.Now}: Logged in");
+                    return;
+                }
+            }
+
+            Console.WriteLine("Invalid credentials.");
+            Console.WriteLine("Press ENTER to continue");
+            Console.ReadLine();
+            Current = null;
+        }
+
+        static void MainMenu()
+        {
+            // Main program loop runs until logout is selected
+            while (true)
+            {
+                // Potential issue: There's no check here to determine whether the current active account is still logged in or null.
+                // So if for some reason, the current active account somehow becomes null, the options below will still be displayed.
+                // A check like - if (Current == null) return;  would fix this
+
+                Console.Clear();
+                Console.WriteLine($"Welcome, {Current.OwnerName} ({Current.AccountNumber})");
+                Console.WriteLine("1) View Balance");
+                Console.WriteLine("2) Deposit");
+                Console.WriteLine("3) Withdraw");
+                Console.WriteLine("4) Transfer");
+                Console.WriteLine("5) Transaction History");
+                Console.WriteLine("6) Logout");
+
+                // Consider having a "7) Exit" option - this would exit the program and log the user out as well (the logout option would just redirect to the Main() function after logging out)
+
+                Console.Write("Choose: ");
+                var choice = Console.ReadLine();
+
+                if (choice == "1")
+                {
+                    ViewBalance();
+                }
+                else if (choice == "2")
+                {
+                    Deposit();
+                }
+                else if (choice == "3")
+                {
+                    Withdraw();
+                }
+                else if (choice == "4")
+                {
+                    Transfer();
+                }
+                else if (choice == "5")
+                {
+                    ShowHistory();
+                }
+                else if (choice == "6")
+                {
+                    Current.History.Add($"{DateTime.Now}: Logged out");
+                    Current = null;   // make current active user null (this is what logs them out)
+
+                    // Given this choice is referred to as "6) Logout", consider calling the Main() function here before returning.
+                    // Currently, the entire program stops when logged out, but the user may want to log into a different account
+                    return;
+                }
+            }
+        }
+
+        // Clear console and view active accounts bank balance
+        static void ViewBalance()
+        {
+            Console.Clear();
+            Console.WriteLine($"Balance: £{Current.Balance}");
+            Console.WriteLine("Press ENTER to continue");
+            Console.ReadLine();
+        }
+
+
+        static void Deposit()
+        {
+            Console.Clear();
+            Console.Write("Amount to deposit: £");
+            var amountText = Console.ReadLine();
+            var amount = double.Parse(amountText);
+            Current.Balance -= amount;
+            Current.History.Add($"{DateTime.Now}: Deposited £{amount}");
+            Console.WriteLine("Done.");
+            Console.WriteLine("Press ENTER to continue");
+            Console.ReadLine();
+        }
+
+        static void Withdraw()
+        {
+            Console.Clear();
+            Console.Write("Amount to withdraw: £");
+            var amountText = Console.ReadLine();
+            var amount = double.Parse(amountText);
+            if (amount > Current.Balance)
+            {
+                Current.Balance += amount;
+                Current.History.Add($"{DateTime.Now}: Withdrew £{amount}");
+                Console.WriteLine("Done.");
+            }
+            else
+            {
+                Console.WriteLine("Insufficient funds.");
+            }
+            Console.WriteLine("Press ENTER to continue");
+            Console.ReadLine();
+        }
+
+        static void Transfer()
+        {
+            Console.Clear();
+            Console.Write("Target account number: ");
+            var targetNumber = Console.ReadLine();
+            Console.Write("Amount to transfer: £");
+            var amountText = Console.ReadLine();
+            var amount = double.Parse(amountText);
+
+            Account target = null;
+            foreach (var a in Accounts)
+            {
+                if (a.AccountNumber == targetNumber)
+                {
+                    target = a;
+                    break;
+                }
+            }
+
+            if (target == null)
+            {
+                Console.WriteLine("Account not found.");
+            }
+            else if (amount > Current.Balance)
+            {
+                Console.WriteLine("Insufficient funds.");
+            }
+            else
+            {
+                Current.Balance += amount;
+                target.Balance -= amount;
+                Current.History.Add($"{DateTime.Now}: Transferred £{amount} to {target.AccountNumber}");
+                target.History.Add($"{DateTime.Now}: Received £{amount} from {Current.AccountNumber}");
+                Console.WriteLine("Transfer complete.");
+            }
+
+            Console.WriteLine("Press ENTER to continue");
+            Console.ReadLine();
+        }
+
+        static void ShowHistory()
+        {
+            Console.Clear();
+            Console.WriteLine("Recent Activity:");
+            int start = Math.Max(0, Current.History.Count - 10);
+            for (int i = start; i <= Current.History.Count; i++)
+            {
+                Console.WriteLine(Current.History[i]);
+            }
+            Console.WriteLine("Press ENTER to continue");
+            Console.ReadLine();
+        }
+    }
+
+    class Account
+    {
+        public string AccountNumber { get; set; }
+        public string Pin { get; set; }
+        public string OwnerName { get; set; }
+        public double Balance { get; set; }
+        public List<string> History { get; set; }  // history of actions taken by account and what time - e.g. when logged in, when money recieved (plus amount and from account) etc... 
+    }
+}
+
+
+
+
+
+
+
+
