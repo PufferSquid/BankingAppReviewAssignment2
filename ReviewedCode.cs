@@ -14,7 +14,8 @@ namespace ApprenticeBank
             new Account { AccountNumber = "1003", Pin = "1111", OwnerName = "Jamie", Balance = 50.00, History = new List<string>() }
         };
 
-        static Account Current;  // the currently logged in account
+        // the currently logged in account - consider renaming to something with more clarity e.g. "CurrentActiveAccount" or "LoggedInAccount"
+        static Account Current;
 
         // Entry point of the program
         static void Main(string[] args)
@@ -28,6 +29,8 @@ namespace ApprenticeBank
                 Console.WriteLine("=== Apprentice Bank ===");
                 Console.WriteLine("1) Login");
                 Console.WriteLine("2) Exit");
+
+                // Consider adding more clarity as to what the expected input is e.g. "Please enter the number before your choice, e.g. 1 - to log in"
                 Console.Write("Choose: ");
                 var choice = Console.ReadLine();
 
@@ -48,6 +51,8 @@ namespace ApprenticeBank
                 {
                     return;
                 }
+
+                // Consider adding an else statement, that displays an invalid input warning to the user and suggests a correct expected input
             }
         }
 
@@ -97,11 +102,16 @@ namespace ApprenticeBank
                 Console.WriteLine("5) Transaction History");
                 Console.WriteLine("6) Logout");
 
-                // Consider having a "7) Exit" option - this would exit the program and log the user out as well (the logout option would just redirect to the Main() function after logging out)
+                // Consider having a "7) Exit" option - this would exit the program and log the user out as well
+                // (the logout option would just redirect to the Main() function after logging out)
 
+                // Consider adding more clarity as to what the expected input is e.g. "Please enter the number before your choice, e.g. 2 - to view Deposite"
                 Console.Write("Choose: ");
                 var choice = Console.ReadLine();
 
+                // Call different functions based on input choice.
+                // consider expanding the acceptable inputs to include the names of the choices or the number plus an ) e.g. "3)
+                // However, note that this would make it harder to maintain if the names of the choices changed, or new choices are added
                 if (choice == "1")
                 {
                     ViewBalance();
@@ -131,6 +141,9 @@ namespace ApprenticeBank
                     // Currently, the entire program stops when logged out, but the user may want to log into a different account
                     return;
                 }
+
+                // Consider adding an else statement that displays a warning message to the user, and guides them on what input is expected
+                // e.g. "Invalid input. Please enter the number before the option you would like to select."
             }
         }
 
@@ -144,6 +157,7 @@ namespace ApprenticeBank
         }
 
 
+        // Clear console and allow user to make a deposite to their account
         static void Deposit()
         {
             Console.Clear();
